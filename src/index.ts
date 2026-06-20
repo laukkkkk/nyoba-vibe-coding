@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { db } from "./db";
 import { users } from "./db/schema";
+import { userRoute } from "./routes/user-route";
 
 const app = new Elysia()
   .get("/", () => "API is running")
@@ -17,6 +18,7 @@ const app = new Elysia()
       };
     }
   })
+  .use(userRoute)
   .listen(3000);
 
 console.log(
