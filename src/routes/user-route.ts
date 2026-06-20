@@ -1,10 +1,13 @@
 import { Elysia, t } from "elysia";
-import { registerUser } from "../services/user-service";
+import { registerUser, loginUser } from "../services/user-service";
 
 export const userRoute = new Elysia({ prefix: "/api" })
-  .onError(({ code, set }) => {
+  .onError(({ code, set, path }) => {
     if (code === "VALIDATION") {
       set.status = 400;
+      if (path.endsWith("/login")) {
+        return { data: "login gagal" };
+      }
       return { data: "user gagal dibuat" };
     }
   })
@@ -29,4 +32,33 @@ export const userRoute = new Elysia({ prefix: "/api" })
         password: t.String(),
       }),
     }
+  )
+  .post(
+    "/users/login",
+    async ({ body, set, cookie }) => {
+      const { name, email } = body;
+      const token = await loginUser(name, email);
+
+      if (!token) {
+        set.status = 400;
+        return { data: "login gagal" };
+      }
+
+      // Set cookie and custom header with the session token
+      cookie.session_token.set({
+        value: token,
+        path: "/",
+        httpOnly: true,
+      });
+      set.headers["X-Session-Token"] = token;
+
+      return { data: "token berhasil dibuat" };
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        email: t.String(),
+      }),
+    }
   );
+
