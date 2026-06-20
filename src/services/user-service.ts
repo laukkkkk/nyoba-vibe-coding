@@ -1,5 +1,6 @@
 import { db } from "../db";
-import { users } from "../db/schema";
+import { users, sessions } from "../db/schema";
+import { eq, and } from "drizzle-orm";
 
 /**
  * Registers a new user in the database.
@@ -28,3 +29,40 @@ export async function registerUser(name: string, email: string, password: string
     return false;
   }
 }
+
+/**
+ * Logins a user by verifying name and email, then creates a new session.
+ * 
+ * @param name User's name
+ * @param email User's email
+ * @returns string | null session token if successful, null if failed
+ */
+export async function loginUser(name: string, email: string): Promise<string | null> {
+  try {
+    // Find matching user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.name, name), eq(users.email, email)))
+      .limit(1);
+
+    if (!user) {
+      return null;
+    }
+
+    // Generate session token (UUID)
+    const token = crypto.randomUUID();
+
+    // Insert session into database
+    await db.insert(sessions).values({
+      token,
+      userId: user.id,
+    });
+
+    return token;
+  } catch (error) {
+    console.error("Failed to login user:", error);
+    return null;
+  }
+}
+

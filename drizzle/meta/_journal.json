@@ -15,6 +15,13 @@
       "when": 1781970522394,
       "tag": "0001_aromatic_gwen_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781974499897,
+      "tag": "0002_ambiguous_angel",
+      "breakpoints": true
     }
   ]
 }
