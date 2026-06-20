@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { registerUser, loginUser } from "../services/user-service";
+import { registerUser, loginUser, getCurrentUser } from "../services/user-service";
 
 export const userRoute = new Elysia({ prefix: "/api" })
   .onError(({ code, set, path }) => {
@@ -45,7 +45,7 @@ export const userRoute = new Elysia({ prefix: "/api" })
       }
 
       // Set cookie and custom header with the session token
-      cookie.session_token.set({
+      cookie.session_token?.set({
         value: token,
         path: "/",
         httpOnly: true,
@@ -59,6 +59,33 @@ export const userRoute = new Elysia({ prefix: "/api" })
         name: t.String(),
         email: t.String(),
       }),
+    }
+  )
+  .get(
+    "/users/current",
+    async ({ headers, set }) => {
+      const authHeader = headers.authorization || headers["Authorization"];
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        set.status = 401;
+        return { data: "Unauthorized" };
+      }
+
+      const token = authHeader.substring(7);
+      const user = await getCurrentUser(token);
+
+      if (!user) {
+        set.status = 401;
+        return { data: "Unauthorized" };
+      }
+
+      return {
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          created_ad: user.createdAt,
+        },
+      };
     }
   );
 
