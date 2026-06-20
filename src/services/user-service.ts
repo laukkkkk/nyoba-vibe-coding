@@ -66,3 +66,31 @@ export async function loginUser(name: string, email: string): Promise<string | n
   }
 }
 
+/**
+ * Retrieves the current logged-in user details by checking the session token.
+ * 
+ * @param token Session token UUID
+ * @returns User object if session is valid, null otherwise
+ */
+export async function getCurrentUser(token: string): Promise<{ id: number; name: string; email: string; createdAt: Date | null } | null> {
+  try {
+    const [result] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+      })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    return result || null;
+  } catch (error) {
+    console.error("Failed to get current user:", error);
+    return null;
+  }
+}
+
+
